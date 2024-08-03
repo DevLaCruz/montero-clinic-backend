@@ -13,10 +13,11 @@ class QuestionSerializer(serializers.ModelSerializer):
     answers = AnswerSerializer(many=True, required=False)
     test_id = serializers.PrimaryKeyRelatedField(
         queryset=Test.objects.all(), source='test', write_only=True)
+    image = serializers.ImageField(required=False, allow_null=True)
 
     class Meta:
         model = Question
-        fields = ['id', 'text', 'answers', 'test_id']
+        fields = ['id', 'text', 'image', 'answers', 'test_id']
 
     def create(self, validated_data):
         answers_data = validated_data.pop('answers', [])

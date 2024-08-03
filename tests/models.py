@@ -15,7 +15,7 @@ class Question(models.Model):
     text = models.CharField(max_length=255)
     test = models.ForeignKey(
         Test, related_name='questions', on_delete=models.CASCADE)
-
+    image = models.ImageField(upload_to='question_images/', blank=True, null=True)  # Nuevo campo de imagen
     def __str__(self):
         return self.text
 
