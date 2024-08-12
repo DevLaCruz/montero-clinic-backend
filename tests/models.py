@@ -1,42 +1,115 @@
-# tests/models.py
 from django.db import models
-from django.contrib.auth.models import User
+
+
+class tipoSeleccion(models.Model):
+
+    descripcion = models.CharField(max_length=18)
+
+    def __str__(self):
+        return self.descripcion
+
+
+class tipoTest(models.Model):
+
+    descripcion = models.CharField(max_length=25)
+    fechaCambio = models.DateField(auto_now_add=True)
+    horaCambio = models.TimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.descripcion
 
 
 class Test(models.Model):
-    name = models.CharField(max_length=100)
-    description = models.TextField()
+
+    idTipoTest = models.ForeignKey(tipoTest, on_delete=models.CASCADE)
+    idSeleccion = models.ForeignKey(tipoSeleccion, on_delete=models.CASCADE)
+    nombreTest = models.TextField()
+    abreviatura = models.CharField(max_length=10, null=True, blank=True)
+    evalua = models.CharField(max_length=65)
+    supervision = models.CharField(max_length=1)  # 'S' or 'N'
+    duracion = models.PositiveSmallIntegerField()
+    edadMin = models.PositiveSmallIntegerField(default=0)
+    edadMax = models.PositiveSmallIntegerField(default=0)
+    nroItems = models.PositiveSmallIntegerField()
+    habilitado = models.CharField(max_length=1)  # 'S' or 'N'
+    cuestionario = models.CharField(max_length=50, null=True, blank=True)
+    respuesta = models.CharField(max_length=50, null=True, blank=True)
+    fechaCambio = models.DateField(auto_now_add=True)
+    horaCambio = models.TimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.name
+        return self.nombreTest
 
 
-class Question(models.Model):
-    text = models.CharField(max_length=255)
-    test = models.ForeignKey(
-        Test, related_name='questions', on_delete=models.CASCADE)
-    image = models.ImageField(upload_to='question_images/', blank=True, null=True)  # Nuevo campo de imagen
-    def __str__(self):
-        return self.text
+class Alternativa(models.Model):
 
-
-class Answer(models.Model):
-    text = models.CharField(max_length=255)
-    is_correct = models.BooleanField(default=False)
-    question = models.ForeignKey(
-        Question, related_name='answers', on_delete=models.CASCADE)
+    idTest = models.ForeignKey(Test, on_delete=models.CASCADE)
+    descripcion = models.CharField(max_length=20)
+    puntuacion = models.PositiveSmallIntegerField()
+    fechaCambio = models.DateField(auto_now_add=True)
+    horaCambio = models.TimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.text
+        return self.descripcion
 
 
-class UserResponse(models.Model):
-    user = models.ForeignKey(
-        User, related_name='responses', on_delete=models.CASCADE)
-    question = models.ForeignKey(
-        Question, related_name='user_responses', on_delete=models.CASCADE)
-    selected_answer = models.ForeignKey(
-        Answer, related_name='+', on_delete=models.CASCADE)
+class Dimension(models.Model):
+
+    idTest = models.ForeignKey(Test, on_delete=models.CASCADE)
+    descripcion = models.CharField(max_length=40)
+    puntaje = models.PositiveSmallIntegerField()
+    fechaCambio = models.DateField(auto_now_add=True)
+    horaCambio = models.TimeField(auto_now_add=True)
 
     def __str__(self):
-        return f'{self.user.username} - {self.question.text}'
+        return self.descripcion
+
+
+class Escala(models.Model):
+
+    idDimension = models.ForeignKey(Dimension, on_delete=models.CASCADE)
+    inicioRango = models.PositiveSmallIntegerField()
+    finRango = models.PositiveSmallIntegerField()
+    resultado = models.CharField(max_length=20)
+    tipo = models.CharField(max_length=10)
+    fechaCambio = models.DateField(auto_now_add=True)
+    horaCambio = models.TimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.resultado
+
+
+class Capacidad(models.Model):
+
+    idDimension = models.ForeignKey(Dimension, on_delete=models.CASCADE)
+    nombreCapacidad = models.CharField(max_length=25)
+    abreviatura = models.CharField(max_length=22)
+    puntaje = models.PositiveSmallIntegerField()
+    fechaCambio = models.DateField(auto_now_add=True)
+    horaCambio = models.TimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.nombreCapacidad
+
+
+class Pregunta(models.Model):
+
+    idTest = models.ForeignKey(Test, on_delete=models.CASCADE)
+    pregunta = models.TextField()
+    fechaCambio = models.DateField(auto_now_add=True)
+    horaCambio = models.TimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.pregunta
+
+
+class Respuesta(models.Model):
+
+    idPregunta = models.ForeignKey(Pregunta, on_delete=models.CASCADE)
+    respuesta = models.CharField(max_length=10)
+    puntuacion = models.PositiveSmallIntegerField()
+    fechaCambio = models.DateField(auto_now_add=True)
+    horaCambio = models.TimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.respuesta

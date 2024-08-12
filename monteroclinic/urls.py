@@ -22,9 +22,13 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 
-#from rest_framework.authtoken import views
+# from rest_framework.authtoken import views
 from django.conf.urls.static import static
 from django.conf import settings
+from rest_framework.documentation import include_docs_urls
+from rest_framework import permissions
+
+
 
 urlpatterns = [
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
@@ -32,9 +36,14 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('accounts.urls')),
     path('patients/', include('patients.urls')),
-    #path('api-token-auth/', views.obtain_auth_token),
+    # path('api-token-auth/', views.obtain_auth_token),
     path('api/', include('tests.urls')),
+    # Documentación de la API incorporada de Django REST Framework
+    path('docs/', include_docs_urls(title='API Documentation')),
+
+    
 ]
 
 if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.MEDIA_URL,
+                          document_root=settings.MEDIA_ROOT)

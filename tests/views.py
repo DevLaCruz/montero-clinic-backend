@@ -1,92 +1,66 @@
-# tests/views.py
-from rest_framework import viewsets, permissions, status
-from rest_framework.decorators import action
+from .models import *
+from .serializers import *
+from rest_framework import viewsets, status
 from rest_framework.response import Response
-from django.contrib.auth.models import User
-from .models import Test, Question, Answer, UserResponse
-from .serializers import TestSerializer, QuestionSerializer, AnswerSerializer, UserResponseSerializer
-from math import ceil
 
 
-class TestViewSet(viewsets.ModelViewSet):
+class BaseModelViewSet(viewsets.ModelViewSet):
+    def create(self, request, *args, **kwargs):
+        data = request.data
+
+        # Check if the data is a list
+        if isinstance(data, list):
+            # Handle list of objects
+            serializer = self.get_serializer(data=data, many=True)
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            headers = self.get_success_headers(serializer.data)
+            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        else:
+            # Handle single object
+            return super().create(request, *args, **kwargs)
+
+
+class tipoSeleccionViewSet(BaseModelViewSet):
+    queryset = tipoSeleccion.objects.all()
+    serializer_class = tipoSeleccionSerializer
+
+
+class tipoTestViewSet(BaseModelViewSet):
+    queryset = tipoTest.objects.all()
+    serializer_class = tipoTestSerializer
+
+
+class TestViewSet(BaseModelViewSet):
     queryset = Test.objects.all()
     serializer_class = TestSerializer
-    permission_classes = [permissions.IsAuthenticated]
 
 
-class QuestionViewSet(viewsets.ModelViewSet):
-    queryset = Question.objects.all()
-    serializer_class = QuestionSerializer
-    permission_classes = [permissions.IsAuthenticated]
+class AlternativasViewSet(BaseModelViewSet):
+    queryset = Alternativa.objects.all()
+    serializer_class = AlternativasSerializer
 
 
-class AnswerViewSet(viewsets.ModelViewSet):
-    queryset = Answer.objects.all()
-    serializer_class = AnswerSerializer
-    permission_classes = [permissions.IsAuthenticated]
+class DimensionViewSet(BaseModelViewSet):
+    queryset = Dimension.objects.all()
+    serializer_class = DimensionSerializer
 
 
-class UserResponseViewSet(viewsets.ModelViewSet):
-    queryset = UserResponse.objects.all()
-    serializer_class = UserResponseSerializer
-    permission_classes = [permissions.IsAuthenticated]
+class EscalaViewSet(BaseModelViewSet):
+    queryset = Escala.objects.all()
+    serializer_class = EscalaSerializer
 
-    @action(detail=False, methods=['post'], url_path='submit')
-    def submit_responses(self, request):
-        user = request.user
-        test_id = request.data.get('test_id')
-        responses = request.data.get('responses')
 
-        if not test_id or not responses:
-            return Response({'detail': 'test_id and responses are required.'}, status=status.HTTP_400_BAD_REQUEST)
+class CapacidadesViewSet(BaseModelViewSet):
+    queryset = Capacidad.objects.all()
+    serializer_class = CapacidadesSerializer
 
-        test = Test.objects.filter(id=test_id).first()
-        if not test:
-            return Response({'detail': 'Invalid test_id.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        for response in responses:
-            question_id = response.get('question')
-            selected_answer_id = response.get('selected_answer')
+class PreguntasViewSet(BaseModelViewSet):
+    queryset = Pregunta.objects.all()
+    serializer_class = PreguntasSerializer
 
-            question = Question.objects.filter(
-                id=question_id, test=test).first()
-            if not question:
-                continue
 
-            selected_answer = Answer.objects.filter(
-                id=selected_answer_id, question=question).first()
-            if not selected_answer:
-                continue
-
-            UserResponse.objects.create(
-                user=user,
-                question=question,
-                selected_answer=selected_answer
-            )
-
-        # Calcular el puntaje final
-        score = self.calculate_score(user, test)
-        return Response({'status': 'responses submitted', 'score': score})
-
-    def calculate_score(self, user, test):
-        # Obtener todas las respuestas correctas del usuario para este test
-        correct_responses = UserResponse.objects.filter(
-            user=user,
-            question__test=test,
-            selected_answer__is_correct=True
-        ).count()
-
-        # Calcular el valor de cada pregunta
-        total_questions = test.questions.count()
-        if total_questions == 0:
-            return 0
-
-        high_note = 20
-        score_per_question = high_note / total_questions
-
-        # Redondear el puntaje si es impar
-        total_score = correct_responses * score_per_question
-        if total_questions % 2 != 0:
-            total_score = ceil(total_score)
-
-        return total_score
+class RespuestaViewSet(BaseModelViewSet):
+    queryset = Respuesta.objects.all()
+    serializer_class = RespuestaSerializer
