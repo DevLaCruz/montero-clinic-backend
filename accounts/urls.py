@@ -1,8 +1,7 @@
 from django.urls import path
 from django.views.generic import TemplateView
 from .views import (
-    CustomerRegistrationAPIView, 
-    UserRegistrationAPIView, 
+    UserPatientRegisterAPIView,
     UserLoginAPIView, 
     UserViewAPI, 
     UserLogoutViewAPI, 
@@ -12,8 +11,8 @@ from .views import (
 )
 
 urlpatterns = [
-    path('register/client', CustomerRegistrationAPIView.as_view(), name='register.client'),
-    path('register/worker', UserRegistrationAPIView.as_view(), name='register.worker'),
+    path('register/client', UserPatientRegisterAPIView.as_view(), name='register.client'),
+    #path('register/worker', UserRegistrationAPIView.as_view(), name='register.worker'),
     path('login/', UserLoginAPIView.as_view(), name='login'),
     path('profile/', UserViewAPI.as_view(), name="profile"),
 	path('logout/', UserLogoutViewAPI.as_view(), name="logout"),
