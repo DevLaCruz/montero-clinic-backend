@@ -25,7 +25,13 @@ class ClientPatientSerializer(serializers.ModelSerializer):
             
             return value
 
+class DependentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Patient
+        fields = ['id', 'first_name', 'last_name', 'birth_date', 'gender', 'dni', 'phone', 'email']
+
 class PatientSerializer(serializers.ModelSerializer):
+    dependents = DependentSerializer(many=True, read_only=True)
     class Meta:
         model = Patient
         fields = '__all__'

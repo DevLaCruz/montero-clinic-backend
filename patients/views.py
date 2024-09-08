@@ -1,4 +1,5 @@
 from django.db import transaction
+from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, DjangoModelPermissions
 from rest_framework import serializers
 from rest_framework import viewsets
@@ -33,7 +34,6 @@ class PatientViewSet(viewsets.ModelViewSet):
         # Al actualizar, también aseguramos de que el tutor sea el paciente autenticado
         patient = self.request.user.patient
         serializer.save(tutor=patient)
-    
 
 class CompanyViewSet(viewsets.ModelViewSet):
     queryset = Company.objects.all()

@@ -31,10 +31,10 @@ urlpatterns = [
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('admin/', admin.site.urls),
     path('api/', include('accounts.urls')),
-    path('patients/', include('patients.urls')),
-    path('employees/', include('employees.urls')),
+    path('api/', include('patients.urls')),
+    path('api/', include('employees.urls')),
     path('scheduling/', include('scheduling.urls')),
-    path('api/', include('payments.urls')),
+    path('payments/', include('payments.urls')),
     #path('api-token-auth/', views.obtain_auth_token),
     path('api/', include('tests.urls')),
 ]

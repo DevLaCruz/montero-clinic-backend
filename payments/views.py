@@ -7,4 +7,4 @@ from rest_framework.permissions import IsAdminUser, IsAuthenticated
 class PaymentViewSet(viewsets.ModelViewSet):
     queryset = Payment.objects.all()
     serializer_class = PaymentSerializer
-    permission_classes = [IsAdminUser]
+    ##permission_classes = [IsAdminUser]

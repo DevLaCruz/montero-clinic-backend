@@ -129,24 +129,32 @@ class UserLoginAPIView(APIView):
         if request.data.get('type') == 'P' and not user_instance.is_staff:
             return create_response(False, 'Acceso denegado, no es parte del personal', status_code=status.HTTP_403_FORBIDDEN)
         elif request.data.get('type') == 'C' and user_instance.is_staff:
-            #worker = user_instance.worker
-            ##person = WorkerSerializer(worker).data
             return create_response(False, 'Acceso denegado, no es parte del cliente', status_code=status.HTTP_403_FORBIDDEN)
-            
+        
+        if user_instance.is_staff:
+            name = user_instance.employee.first_name
+            id = user_instance.employee.id
+        elif not user_instance.is_staff:
+            name = user_instance.patient.first_name
+            id = user_instance.patient.id
+        
         refresh = RefreshToken.for_user(user_instance)
         response_data = {
+            'id': id,
+            'name': name,
+            'user': UserSerializer(user_instance).data,
             'refresh': str(refresh),
             'access': str(refresh.access_token),
         }
-        response = create_response(True, 'Bienvenido', data=response_data)
-        response.set_cookie(
+        return create_response(True, 'Bienvenido', data=response_data)
+        '''response.set_cookie(
             key='access_token', 
             value=str(refresh.access_token), 
             httponly=True, 
             secure=True, 
-            samesite='Lax'
-        )
-        return response
+            samesite='Lax',
+            domain='localhost'
+        )'''
 
 #PERFIL (COMPLETE)
 class UserViewAPI(APIView):
