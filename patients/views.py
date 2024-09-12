@@ -1,9 +1,12 @@
 from django.db import transaction
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, DjangoModelPermissions
 from rest_framework import serializers
 from rest_framework import viewsets
 from .models import Patient, Company, Location
+from scheduling.models import PsychologicalAppointment
+from scheduling.serializers import PsychologicalAppointmentSerializer
 from .serializers import PatientSerializer, CompanySerializer, LocationSerializer
 from medical_records.serializers import MedicalRecordSerializer
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -13,6 +16,16 @@ class PatientViewSet(viewsets.ModelViewSet):
     serializer_class = PatientSerializer
     permission_classes = [IsAuthenticated]
     authentication_classes = (JWTAuthentication,)
+    
+    @action(detail=True, methods=['get'], url_path='appointments')
+    def get_appointments(self, request, pk=None):
+        try:
+            patient = self.get_object()  # Obtiene el paciente por su ID (pk)
+            appointments = PsychologicalAppointment.objects.filter(patient=patient)
+            serializer = PsychologicalAppointmentSerializer(appointments, many=True)
+            return Response(serializer.data)
+        except Patient.DoesNotExist:
+            return Response({"error": "Paciente no encontrado."}, status=404)
     
     @transaction.atomic
     def perform_create(self, serializer):

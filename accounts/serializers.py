@@ -20,14 +20,15 @@ class UserLoginSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['username', 'email', 'is_staff']
+        fields = ['username', 'is_staff']
  
 class ChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True, validators=[validate_password])
 
+    # Validar la contraseña anterior
     def validate_old_password(self, value):
-        user = self.context['request'].user
-        if not user.check_password(value):
+        user = self.context['request'].user  # Acceder al usuario autenticado
+        if not user.check_password(value):  # Verificar la contraseña
             raise serializers.ValidationError("La contraseña anterior no es correcta")
         return value

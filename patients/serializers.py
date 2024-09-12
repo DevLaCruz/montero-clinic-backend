@@ -12,7 +12,7 @@ class ClientPatientSerializer(serializers.ModelSerializer):
             'tutor': {'required': False, 'default': None},
             'relationship': {'required': False, 'default': None},
             'location': {'required': True},
-            'company': {'required': True}
+            'company': {'required': False}
         }
         
         def validate_birth_date(self, value):

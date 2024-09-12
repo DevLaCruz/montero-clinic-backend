@@ -9,7 +9,7 @@ from rest_framework.views import APIView
 from .models import Day, DaysEmployee, TimeSlot, AppointmentReason, Sede, PsychologicalAppointment
 from patients.models import Patient
 from .serializers import AvailableTimeSlotsSerializer, DaySerializer, DaysEmployeeSerializer, TimeSlotSerializer, AppointmentReasonSerializer, SedeSerializer, PsychologicalAppointmentSerializer
-#from payments.serializers import PaymentSerializer
+from payments.serializers import PaymentSerializer
 import locale
 
 class TimeSlotViewSet(viewsets.ModelViewSet):
@@ -79,9 +79,11 @@ class PsychologicalAppointmentViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         appointment = serializer.save()
         
-        payment_data = self.request.data.get('payment')
-        payment_data['psychological_appointment'] = appointment.id
-        
+        payment_data = {
+            'psychological_appointment': appointment.id,  # Relacionar el pago con la cita creada
+            'amount': self.request.data.get('amount'),
+            'payment_image': self.request.FILES.get('payment_image')  # Imagen del pago
+        }
         payment_serializer = PaymentSerializer(data=payment_data)
         payment_serializer.is_valid(raise_exception=True)
         payment_serializer.save()

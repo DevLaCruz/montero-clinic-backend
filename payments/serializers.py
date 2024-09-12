@@ -7,6 +7,7 @@ class PaymentSerializer(serializers.ModelSerializer):
         fields = '__all__'
         extra_kwargs = {
             'status':{'required': False},
+            'payment_image':{'required': True},
         }
     def create(self, validated_data):
         # Eliminar 'status'

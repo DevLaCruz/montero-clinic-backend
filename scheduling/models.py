@@ -62,18 +62,17 @@ class Sede(models.Model):
         return self.name
 
 class PsychologicalAppointment(models.Model):
-    ## Colocar el start y en final
     id = models.AutoField(primary_key=True)
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
-    days_employee = models.ForeignKey(DaysEmployee, on_delete=models.CASCADE)
+    #days_employee = models.ForeignKey(DaysEmployee, on_delete=models.CASCADE)
     appointment_reason = models.ForeignKey(AppointmentReason, on_delete=models.CASCADE)
     sede = models.ForeignKey(Sede, on_delete=models.CASCADE)
     date = models.DateField()
     creation_date = models.DateField(auto_now_add=True)
     creation_time = models.TimeField(auto_now_add=True)
     notes = models.TextField(null=True, blank=True)
-    # P = Pendiente de pago, P = Por validar, A = Agendada, F = Atendida, R = Reprogramada
-    status = models.CharField(max_length=15, default='Pendiente de pago')
+    #P = Por validar pago, A = Agendada, F = Atendida, R = Reprogramada
+    status = models.CharField(max_length=15, default='Por validar pago')
     modality = models.CharField(max_length=1, default='P', choices=[('P', 'Presencial'), ('V', 'Virtual')])
     price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     start_time = models.TimeField()

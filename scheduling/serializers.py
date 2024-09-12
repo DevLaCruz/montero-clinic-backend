@@ -65,11 +65,9 @@ class AppointmentReasonSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class PsychologicalAppointmentSerializer(serializers.ModelSerializer):
-    #price = serializers.SerializerMethodField()
     class Meta:
         model = PsychologicalAppointment
         fields = '__all__'
-        #depth = 1
     
     ''''def get_price(self, obj):
         base_price = obj.appointment_reason.base_price  # Esto ya es DecimalField
