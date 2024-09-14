@@ -1,12 +1,14 @@
 from rest_framework import serializers
-from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 #
 class UserRegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['username', 'email', 'password']
+        fields = ['email', 'password']
         extra_kwargs = {'password': {'write_only': True},
                         'email': {'required': True}}
         
@@ -20,7 +22,7 @@ class UserLoginSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['username', 'is_staff']
+        fields = ['email', 'is_worker']
  
 class ChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(required=True)

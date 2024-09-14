@@ -1,7 +1,5 @@
-# tests/models.py
 from django.db import models
-from django.contrib.auth.models import User
-
+from django.conf import settings  # Importa settings para usar AUTH_USER_MODEL
 
 class Test(models.Model):
     name = models.CharField(max_length=100)
@@ -31,8 +29,9 @@ class Answer(models.Model):
 
 
 class UserResponse(models.Model):
+    # Cambia la referencia a 'auth.User' por settings.AUTH_USER_MODEL
     user = models.ForeignKey(
-        User, related_name='responses', on_delete=models.CASCADE)
+        settings.AUTH_USER_MODEL, related_name='responses', on_delete=models.CASCADE)
     question = models.ForeignKey(
         Question, related_name='user_responses', on_delete=models.CASCADE)
     selected_answer = models.ForeignKey(

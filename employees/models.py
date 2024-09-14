@@ -1,9 +1,10 @@
 from django.db import models
-from django.contrib.auth.models import User, Group
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from patients.models import Location
 
 class Employee(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(get_user_model(), on_delete=models.CASCADE)
     dni = models.CharField(max_length=8, unique=True)
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)

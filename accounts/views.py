@@ -21,25 +21,17 @@ from django.template.loader import render_to_string
 from django.core.mail import send_mail
 from django.shortcuts import render, redirect
 from django.contrib.auth.forms import SetPasswordForm
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
 def response(data=None, detail=None, status_code=status.HTTP_200_OK):
     if detail:
         return Response({'detail': detail}, status=status_code)
     return Response(data, status=status_code)
 
-
-# Respuesta
-def create_response(success, message, data=None, errors=None, status_code=status.HTTP_200_OK):
-    return Response({
-        'success': success,
-        'message': message,
-        'data': data,
-        'errors': errors,
-    }, status=status_code)
-
 # EVIAR GMAIL PARA RESTABLECER (COMPLETE)
 class PasswordResetRequestAPIView(APIView):
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (AllowAny,)
 
     def post(self, request):
         email = request.data.get('email')
@@ -57,12 +49,13 @@ class PasswordResetRequestAPIView(APIView):
                 'reset_link': reset_link,
             })
             send_mail(mail_subject, message, 'joseleo042001@gmail.com', [email])
+            return response(data={'message': 'Revise su correo para el restablecimiento de contraseña'}, status_code=status.HTTP_200_OK)
 
-        return response(status_code=status.HTTP_200_OK)
+        return response(detail='El correo no se encuentra registrado (Verifique su correo)', status_code=status.HTTP_400_BAD_REQUEST)
 
 # RESTABLECER PASSWORD (COMPLETE)
 class PasswordResetConfirmAPIView(APIView):
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (AllowAny,)
 
     def post(self, request):
         uidb64 = request.data.get('uid')
@@ -78,9 +71,9 @@ class PasswordResetConfirmAPIView(APIView):
         if user and default_token_generator.check_token(user, token):
             user.set_password(new_password)
             user.save()
-            return response(status_code=status.HTTP_200_OK)
+            return response(data={'message': 'Contraseña actualizada'}, status_code=status.HTTP_200_OK)
         else:
-            return response(detail='Token o ID de usuario no válido', status_code=status.HTTP_400_BAD_REQUEST)
+            return response(detail='Token o ID de usuario no válido', status_code=status.HTTP_401_UNAUTHORIZED)
 
 #REGISTRO DE CUENTA PARA PACIENTE-CLIENTE ()
 class UserPatientRegisterAPIView(APIView):
@@ -93,15 +86,14 @@ class UserPatientRegisterAPIView(APIView):
         serializer.is_valid(raise_exception=True)
         validated_data = serializer.validated_data
         user = User(
-            username=validated_data['username']
+            email=validated_data['email']
         )
         user.set_password(validated_data['password'])
         user.save()
         
         #Registro de paciente
-        patient_data = request.data.get('patient')
-        patient_data['user'] = user.id
-        patient_serializer = ClientPatientSerializer(data=patient_data)
+        request.data['user'] = user.id
+        patient_serializer = ClientPatientSerializer(data=request.data)
         patient_serializer.is_valid(raise_exception=True)
         patient = patient_serializer.save()
         
@@ -114,10 +106,14 @@ class UserPatientRegisterAPIView(APIView):
         # Tokens de acceso
         refresh = RefreshToken.for_user(user)
         data = {
+            'user': {
+                'id': patient.id,
+                'name': patient.first_name,
+                'email': user.email,
+                'is_worker': user.is_worker,
+            },
             'refresh': str(refresh),
             'access': str(refresh.access_token),
-            'user_id': patient.id,
-            'user_name': {patient.first_name},
         }
         return Response(data, status=status.HTTP_201_CREATED)
         #response.set_cookie(key='access_token', value=data['access'], httponly=True, secure=True)
@@ -131,7 +127,7 @@ class UserLoginAPIView(APIView):
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user_instance = authenticate(username=request.data.get('username'), password=request.data.get('password'))
+        user_instance = authenticate(username=request.data.get('email'), password=request.data.get('password'))
         
         # VALIDACIONES
         if not user_instance:
@@ -139,23 +135,26 @@ class UserLoginAPIView(APIView):
         if not user_instance.is_active:
             return response(detail='Usuario inactivo', status_code=status.HTTP_403_FORBIDDEN)
         
-        if request.data.get('type') == 'P' and not user_instance.is_staff:
+        if request.data.get('type') == 'P' and not user_instance.is_worker:
             return response(detail='Acceso denegado, no es parte del personal', status_code=status.HTTP_403_FORBIDDEN)
-        elif request.data.get('type') == 'C' and user_instance.is_staff:
+        elif request.data.get('type') == 'C' and user_instance.is_worker:
             return response(detail='Acceso denegado, no es parte del cliente', status_code=status.HTTP_403_FORBIDDEN)
         
-        if user_instance.is_staff:
+        if user_instance.is_worker:
             name = user_instance.employee.first_name
             id = user_instance.employee.id
-        elif not user_instance.is_staff:
+        elif not user_instance.is_worker:
             name = user_instance.patient.first_name
             id = user_instance.patient.id
         
         refresh = RefreshToken.for_user(user_instance)
         response_data = {
-            'id': id,
-            'name': name,
-            'user': UserSerializer(user_instance).data,
+            'user': {
+                'id': id,
+                'name': name,
+                'email': user_instance.email,
+                'is_worker': user_instance.is_worker,
+            },
             'refresh': str(refresh),
             'access': str(refresh.access_token),
         }
@@ -177,7 +176,7 @@ class UserViewAPI(APIView):
     
     def get(self, request):
         user = request.user
-        if not user.is_staff:
+        if not user.is_worker:
             patient = user.patient
             person = PatientSerializer(patient).data
         else:
@@ -217,16 +216,17 @@ class UserLogoutViewAPI(APIView):
 
 # NUEVA CONTRASEÑA (COMPLETE)
 class ChangePasswordView(APIView):
+    authentication_classes = (JWTAuthentication,)
     permission_classes = (IsAuthenticated,)
 
     def post(self, request):
         serializer = ChangePasswordSerializer(data=request.data, context={'request': request})
-        if serializer.is_valid():
-            request.user.set_password(serializer.validated_data['new_password'])
-            request.user.save()
-            return Response(status=status.HTTP_200_OK)
-        errors = serializer.errors
-        if 'old_password' in errors:
-            old_password_error = errors['old_password'][0]
-            return response(detail=old_password_error, status_code=status.HTTP_400_BAD_REQUEST)
-        return response(detail="Error al actualizar la contraseña", status_code=status.HTTP_400_BAD_REQUEST)
+        
+        # Dejamos que DRF maneje las validaciones automáticamente
+        serializer.is_valid(raise_exception=True)
+        
+        # Si es válido, actualizamos la contraseña
+        request.user.set_password(serializer.validated_data['new_password'])
+        request.user.save()
+        
+        return Response({'message': 'Contraseña actualizada correctamente'}, status=status.HTTP_200_OK)

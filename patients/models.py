@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 
 class Company(models.Model):
     name = models.CharField(max_length=255)
@@ -19,7 +19,7 @@ class Location(models.Model):
         return f'{self.department}-{self.province}-{self.district}'
 
 class Patient(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True)
+    user = models.OneToOneField(get_user_model(), on_delete=models.CASCADE, null=True)
     dni = models.CharField(max_length=8, unique=True)
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
@@ -34,7 +34,7 @@ class Patient(models.Model):
     area = models.CharField(max_length=255, null=True, blank=True)#opcional
     address = models.CharField(max_length=255, null=True, blank=True)
     phone = models.CharField(max_length=20)#Falta unico (preguntar)
-    email = models.EmailField(unique=True, null=True, blank=True)
+    #email = models.EmailField(unique=True, null=True, blank=True)
     #legal_guardian = models.CharField(max_length=255)
     #guardian_phone = models.CharField(max_length=20)
     relationship = models.CharField(max_length=255, null=True, blank=True)
